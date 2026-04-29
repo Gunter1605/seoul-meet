@@ -1,3 +1,7 @@
+/**
+ * Seoul Meet — App Entry Point
+ */
+
 'use strict';
 
 let currentCat   = '';
@@ -5,41 +9,17 @@ let currentModal = null;
 let selectedItem = null;
 let itemMods     = {};
 let itemQty      = 1;
-let lang         = localStorage.getItem('smLang') || 'ru'; // 'ru' | 'en'
 
-/* ── Init ── */
 async function init() {
   await loadData();
-  applyLang();
+
   const isAdmin = location.hash === '#admin-seoulm33t'
                || location.search.includes('admin-panel');
+
   if (isAdmin) showAdminLogin();
   else         showGuest();
 }
 
-/* ── Language ── */
-function toggleLang() {
-  lang = lang === 'ru' ? 'en' : 'ru';
-  localStorage.setItem('smLang', lang);
-  applyLang();
-  renderCompliment();
-  renderNav();
-  if (currentCat) renderSection(currentCat);
-  updateLangBtn();
-}
-
-function applyLang() { updateLangBtn(); }
-
-function updateLangBtn() {
-  const btn = document.getElementById('langBtn');
-  if (btn) btn.textContent = lang === 'ru' ? 'EN' : 'RU';
-}
-
-function t(ruVal, enVal) {
-  return (lang === 'en' && enVal) ? enVal : (ruVal || '');
-}
-
-/* ── Views ── */
 function showGuest() {
   document.getElementById('guest-root').style.display       = '';
   document.getElementById('admin-login-root').style.display = 'none';
@@ -65,7 +45,7 @@ function exitAdmin() {
   showGuest();
 }
 
-/* ── Helpers ── */
+/* ── Утилиты ── */
 function fmt(n) { return Number(n || 0).toLocaleString('ru-RU'); }
 
 function esc(s) {
@@ -75,19 +55,15 @@ function esc(s) {
 }
 
 function toast(msg, duration = 2400) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(el._tid);
-  el._tid = setTimeout(() => el.classList.remove('show'), duration);
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('show'), duration);
 }
 
 function sortedCats() {
   return [...data.categories].sort((a, b) => (a.order || 0) - (b.order || 0));
-}
-
-function catType(catId) {
-  return data.categories.find(c => c.id === catId)?.type || 'food';
 }
 
 function catSvg(cat) {
@@ -104,7 +80,7 @@ function catSvg(cat) {
 function formatCatTitle(name) {
   const parts = name.split(' ');
   if (parts.length === 2) return `${parts[0]} <em>${parts[1]}</em>`;
-  if (['Appetizers','Soups','Noodles','Ramen','Desserts'].includes(name)) return `<em>${name}</em>`;
+  if (['Appetizers','Soups','Noodles','Ramen'].includes(name)) return `<em>${name}</em>`;
   return name;
 }
 

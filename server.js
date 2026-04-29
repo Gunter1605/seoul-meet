@@ -1,4 +1,17 @@
+/**
+ * Seoul Meet — Backend Server
+ *
+ * Запуск:  node server.js
+ * Порт:    3000 (или PORT из переменной окружения)
+ *
+ * API:
+ *   GET  /api/menu          — получить всё меню (публично)
+ *   PUT  /api/menu          — обновить меню (требует X-Admin-Password)
+ *   POST /api/upload        — загрузить фото (требует X-Admin-Password)
+ */
+
 'use strict';
+
 const express = require('express');
 const multer  = require('multer');
 const path    = require('path');
@@ -7,32 +20,162 @@ const fs      = require('fs');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-const ROOT      = __dirname;
-const PUBLIC    = path.join(ROOT, 'public');
-const DATA_DIR  = path.join(ROOT, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'menu.json');
-const UPL_DIR   = path.join(ROOT, 'uploads');
+/* ── Пути ── */
+const DATA_FILE    = path.join(__dirname, 'data', 'menu.json');
+const UPLOADS_DIR  = path.join(__dirname, 'uploads');
+const PUBLIC_DIR   = path.join(__dirname, 'public');
 
-[DATA_DIR, UPL_DIR].forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d, {recursive:true}); });
+/* ── Убеждаемся что папки существуют ── */
+if (!fs.existsSync(path.join(__dirname, 'data'))) fs.mkdirSync(path.join(__dirname, 'data'));
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR);
 
+/* ── Multer: сохранение загружаемых фото ── */
 const storage = multer.diskStorage({
-  destination: (_,__,cb) => cb(null, UPL_DIR),
-  filename:    (_,file,cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${path.extname(file.originalname).toLowerCase()||'.jpg'}`)
+  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
+  filename:    (req, file, cb) => {
+    const ext  = path.extname(file.originalname).toLowerCase() || '.jpg';
+    const name = Date.now() + '-' + Math.random().toString(36).slice(2) + ext;
+    cb(null, name);
+  }
 });
-const upload = multer({ storage, limits:{fileSize:5*1024*1024}, fileFilter:(_,file,cb)=>{ const ok=/\.(jpe?g|png|webp|gif)$/i.test(file.originalname); cb(ok?null:new Error('Images only'),ok); } });
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  fileFilter: (req, file, cb) => {
+    const allowed = ['.jpg','.jpeg','.png','.webp','.gif'];
+    const ok = allowed.includes(path.extname(file.originalname).toLowerCase());
+    cb(ok ? null : new Error('Только изображения'), ok);
+  }
+});
 
-function readMenu()  { try { return JSON.parse(fs.readFileSync(DATA_FILE,'utf8')); } catch { return null; } }
-function writeMenu(d){ fs.writeFileSync(DATA_FILE, JSON.stringify(d,null,2), 'utf8'); }
-function auth(req,res){ const m=readMenu(); const exp=m?.settings?.adminPassword||'SM2025'; if((req.headers['x-admin-password']||'')!==exp){res.status(401).json({error:'Неверный пароль'});return false;} return true; }
+/* ══════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════ */
 
-app.use(express.json({limit:'20mb'}));
-app.use(express.static(PUBLIC));
-app.use('/uploads', express.static(UPL_DIR));
+/** Читает menu.json. Если файла нет — возвращает null. */
+function readMenu() {
+  try {
+    return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+  } catch (e) {
+    return null;
+  }
+}
 
-app.get('/api/menu', (_,res) => { const m=readMenu(); if(!m) return res.status(204).end(); res.json(m); });
-app.put('/api/menu', (req,res) => { if(!auth(req,res))return; const d=req.body; if(!d||!Array.isArray(d.items)) return res.status(400).json({error:'Bad format'}); try{writeMenu(d);res.json({ok:true});}catch(e){res.status(500).json({error:e.message});} });
-app.post('/api/upload', (req,res) => { if(!auth(req,res))return; upload.single('image')(req,res,err=>{ if(err)return res.status(400).json({error:err.message}); if(!req.file)return res.status(400).json({error:'No file'}); res.json({ok:true,url:`/uploads/${req.file.filename}`}); }); });
-app.delete('/api/upload/:fn', (req,res) => { if(!auth(req,res))return; const fp=path.join(UPL_DIR,path.basename(req.params.fn)); if(fs.existsSync(fp))try{fs.unlinkSync(fp);}catch{}; res.json({ok:true}); });
-app.get('*',(_,res)=>{ const idx=path.join(PUBLIC,'index.html'); fs.existsSync(idx)?res.sendFile(idx):res.status(404).send('index.html not found'); });
+/** Записывает данные в menu.json. */
+function writeMenu(data) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+}
 
-app.listen(PORT,()=>{ console.log(`\n✅ Seoul Meet: http://localhost:${PORT}\n   Admin: http://localhost:${PORT}/#admin-seoulm33t\n`); });
+/**
+ * Проверяет пароль администратора из заголовка X-Admin-Password.
+ * Пароль хранится в menu.json → settings.adminPassword.
+ * Дефолт: SM2025
+ */
+function checkAdminAuth(req, res) {
+  const menu     = readMenu();
+  const expected = menu?.settings?.adminPassword || 'SM2025';
+  const given    = req.headers['x-admin-password'] || '';
+  if (given !== expected) {
+    res.status(401).json({ error: 'Неверный пароль' });
+    return false;
+  }
+  return true;
+}
+
+/* ══════════════════════════════════════════
+   MIDDLEWARE
+══════════════════════════════════════════ */
+
+app.use(express.json({ limit: '20mb' }));
+app.use(express.static(PUBLIC_DIR));         // фронтенд
+app.use('/uploads', express.static(UPLOADS_DIR)); // загруженные фото
+
+/* ══════════════════════════════════════════
+   API ROUTES
+══════════════════════════════════════════ */
+
+/**
+ * GET /api/menu
+ * Возвращает всё меню. Публичный — без авторизации.
+ */
+app.get('/api/menu', (req, res) => {
+  const menu = readMenu();
+  if (!menu) {
+    // Файла ещё нет — клиент использует DEFAULT_DATA из data.js
+    return res.status(204).end();
+  }
+  res.json(menu);
+});
+
+/**
+ * PUT /api/menu
+ * Сохраняет меню. Требует заголовок X-Admin-Password.
+ */
+app.put('/api/menu', (req, res) => {
+  if (!checkAdminAuth(req, res)) return;
+
+  const payload = req.body;
+  if (!payload || !Array.isArray(payload.items)) {
+    return res.status(400).json({ error: 'Неверный формат данных' });
+  }
+
+  try {
+    writeMenu(payload);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * POST /api/upload
+ * Загружает фото и возвращает его URL.
+ * Требует заголовок X-Admin-Password.
+ */
+app.post('/api/upload', (req, res) => {
+  if (!checkAdminAuth(req, res)) return;
+
+  upload.single('image')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'Файл не получен' });
+
+    const url = `/uploads/${req.file.filename}`;
+    res.json({ ok: true, url });
+  });
+});
+
+/**
+ * DELETE /api/upload/:filename
+ * Удаляет загруженное фото (вызывается при удалении блюда).
+ * Требует заголовок X-Admin-Password.
+ */
+app.delete('/api/upload/:filename', (req, res) => {
+  if (!checkAdminAuth(req, res)) return;
+
+  const filename = path.basename(req.params.filename); // защита от path traversal
+  const filepath = path.join(UPLOADS_DIR, filename);
+
+  if (!fs.existsSync(filepath)) return res.json({ ok: true }); // уже нет — ок
+
+  try {
+    fs.unlinkSync(filepath);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/* ── SPA fallback: все остальные запросы → index.html ── */
+app.get('*', (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+});
+
+/* ══════════════════════════════════════════
+   START
+══════════════════════════════════════════ */
+
+app.listen(PORT, () => {
+  console.log(`\n✅ Seoul Meet запущен: http://localhost:${PORT}`);
+  console.log(`   Admin Panel:         http://localhost:${PORT}/#admin-seoulm33t`);
+  console.log(`   Пароль по умолчанию: SM2025\n`);
+});
