@@ -44,9 +44,9 @@ npm start
 
 **Шаг 5.** Откройте в браузере:
 - Меню: http://localhost:3000
-- Admin: http://localhost:3000/#admin-seoulm33t
+- Admin: http://localhost:3000/None
 
-**Пароль по умолчанию:** `SM2025`
+**Пароль по умолчанию:** `None`
 
 ---
 
@@ -131,6 +131,6 @@ Admin-запросы требуют заголовок `X-Admin-Password`.
 
 ## Admin Panel
 
-URL: `https://ваш-домен.kz/#admin-seoulm33t`
+URL: `None`
 
-Пароль по умолчанию: `SM2025` — сменить в Admin → Настройки.
+Пароль по умолчанию: `None` — сменить в Admin → Настройки.
