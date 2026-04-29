@@ -116,21 +116,4 @@ sudo certbot --nginx -d seoulm33t.kz -d www.seoulm33t.kz
 
 ---
 
-## API сервера
 
-| Метод | URL | Доступ | Описание |
-|-------|-----|--------|----------|
-| GET | /api/menu | Публичный | Получить всё меню |
-| PUT | /api/menu | Admin | Сохранить меню |
-| POST | /api/upload | Admin | Загрузить фото |
-| DELETE | /api/upload/:file | Admin | Удалить фото |
-
-Admin-запросы требуют заголовок `X-Admin-Password`.
-
----
-
-## Admin Panel
-
-URL: `None`
-
-Пароль по умолчанию: `None` — сменить в Admin → Настройки.
