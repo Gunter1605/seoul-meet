@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#111111">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Seoul Meet | Korean BBQ · Алматы</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<!-- ═══════════ GUEST VIEW ═══════════ -->
+<div id="guest-root">
+
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-line"></div>
+    <!-- Кнопка смены языка -->
+    <button class="lang-btn" id="langBtn" onclick="toggleLang()">EN</button>
+    <div class="hero-content">
+      <div class="brand-kr">서울 미트 · Алматы</div>
+      <div class="brand-name">Seoul <span>Meet</span></div>
+      <div class="brand-sub">Korean BBQ Restaurant</div>
+      <div class="hero-info">
+        <span>
+          <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          Радостовца 270, к3
+        </span>
+        <span>
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+          <span id="heroHours">12:00 – 00:00</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="compliment-banner" id="complimentBanner"></div>
+
+  <div class="nav-wrap"><div class="nav-scroll" id="catNav"></div></div>
+  <div id="menuContent"></div>
+
+  <div class="bottom-bar">
+    <button class="bottom-btn active" id="btnMenu" onclick="goMenu()">
+      <svg viewBox="0 0 24 24"><path d="M3 9v11h7v-7h4v7h7V9L12 3z"/></svg>
+      Меню
+    </button>
+    <button class="bottom-btn" onclick="openModal('allergen')">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      Info
+    </button>
+    <button class="bottom-btn" id="btnCart" onclick="openModal('cart')">
+      <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96C5 16.1 6.1 17 7 17h11v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63H19c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 23.46 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+      Order
+      <div class="cart-badge" id="cartBadge"></div>
+    </button>
+    <button class="bottom-btn" onclick="window.open('https://instagram.com/seoul.meet','_blank')">
+      <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      Instagram
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════ MODALS ═══════════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal-sheet" id="modalSheet" onclick="event.stopPropagation()">
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- ═══════════ ADMIN LOGIN ═══════════ -->
+<div id="admin-login-root">
+  <div class="login-box">
+    <div class="login-title">Seoul <span>Meet</span></div>
+    <span class="login-subtitle">Admin Panel</span>
+    <label class="login-label">Пароль</label>
+    <input class="login-input" type="password" id="adminPassInput"
+           placeholder="••••••" onkeydown="if(event.key==='Enter') adminLogin()">
+    <div class="login-error" id="loginError">Неверный пароль</div>
+    <button class="login-btn" onclick="adminLogin()">Войти</button>
+    <button class="login-back" onclick="exitAdmin()">← Вернуться в меню</button>
+  </div>
+</div>
+
+<!-- ═══════════ ADMIN PANEL ═══════════ -->
+<div id="admin-root">
+  <div class="admin-top">
+    <div class="admin-logo">Seoul <span>Meet</span> · Admin</div>
+    <button class="admin-logout" onclick="adminLogout()">Выйти</button>
+  </div>
+  <div class="admin-tabs">
+    <button class="admin-tab active" onclick="adminTab('items',this)">Блюда</button>
+    <button class="admin-tab"        onclick="adminTab('categories',this)">Категории</button>
+    <button class="admin-tab"        onclick="adminTab('settings',this)">Настройки</button>
+  </div>
+  <div class="admin-content" id="adminContent"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Scripts (порядок важен) -->
+<script src="js/data.js"></script>
+<script src="js/store.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/app.js"></script>
+<script src="js/menu.js"></script>
+<script src="js/modals.js"></script>
+<script src="js/admin.js"></script>
+
+</body>
+</html>
